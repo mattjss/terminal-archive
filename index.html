@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>terminal archive</title>
+<style>
+  :root { --sz: 422px; }
+  @media (min-width: 1440px) { :root { --sz: 576px; } }
+  @media (max-width: 480px)  { :root { --sz: 322px; } }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: #101010;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    transition: background 0.35s;
+  }
+
+  body.light { background: #FCFCFC; }
+
+  #wrap {
+    display: flex; flex-direction: column; align-items: center;
+  }
+
+  #terminal {
+    width: var(--sz); height: var(--sz);
+    background: #101010;
+    border-radius: 10px;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    transition: background 0.35s, border-color 0.35s;
+  }
+
+  body.light #terminal {
+    background: #FCFCFC;
+    border-color: rgba(0,0,0,0.07);
+  }
+
+  #body {
+    flex: 1;
+    padding: 36px 32px 20px;
+    display: flex; flex-direction: column; justify-content: center;
+    overflow: hidden;
+  }
+
+  #output {
+    font-size: 10px;
+    line-height: 2.0;
+    color: #abb2bf;
+    width: 300px;
+    margin: 0 auto;
+    transition: color 0.35s;
+  }
+
+  body.light #output { color: #605850; }
+
+  .line { display: block; }
+
+  .p  { color: #4b5263; }
+  .v  { color: #61afef; }
+  .m  { color: #5c6370; }
+  .d  { color: #3e4451; }
+  .g  { color: #56b6c2; }
+  .mk { color: #f97316; }
+  .wh { color: #abb2bf; }
+
+  body.light .p  { color: #a09080; }
+  body.light .v  { color: #1a5a9e; }
+  body.light .m  { color: #706878; }
+  body.light .d  { color: #a09080; }
+  body.light .g  { color: #1e7a58; }
+  body.light .mk { color: #c24d08; }
+  body.light .wh { color: #383838; }
+
+  .cursor {
+    display: inline-block;
+    width: 5px; height: 12px;
+    background: #f97316;
+    vertical-align: text-bottom;
+    margin-left: 2px;
+    animation: blink 1.0s step-end infinite;
+  }
+
+  body.light .cursor { background: #c24d08; }
+
+  @keyframes blink {
+    0%, 49%  { opacity: 1; }
+    50%, 100% { opacity: 0; }
+  }
+
+  #bottom {
+    display: flex; flex-direction: column; align-items: center;
+    padding-bottom: 18px; gap: 7px;
+  }
+
+  #controls-row {
+    display: flex; align-items: center; gap: 18px;
+  }
+
+  .paddle {
+    background: none; border: none; cursor: pointer;
+    color: rgba(255,255,255,0.18);
+    padding: 4px 8px;
+    border-radius: 3px;
+    display: flex; align-items: center; justify-content: center;
+    transition: color 0.15s;
+    user-select: none;
+  }
+
+  .paddle:hover  { color: rgba(255,255,255,0.42); }
+  .paddle:active { color: rgba(255,255,255,0.72); }
+
+  body.light .paddle         { color: rgba(0,0,0,0.20); }
+  body.light .paddle:hover   { color: rgba(0,0,0,0.48); }
+  body.light .paddle:active  { color: rgba(0,0,0,0.72); }
+
+  .toggle {
+    position: relative; display: inline-block;
+    width: 26px; height: 14px; cursor: pointer;
+  }
+  .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .knob {
+    position: absolute; inset: 0;
+    background: rgba(255,255,255,0.08);
+    border-radius: 7px; transition: background 0.2s;
+  }
+  .knob::before {
+    content: ''; position: absolute;
+    width: 10px; height: 10px; left: 2px; top: 2px;
+    background: rgba(255,255,255,0.22); border-radius: 50%;
+    transition: transform 0.18s, background 0.18s;
+  }
+  .toggle input:checked + .knob { background: rgba(255,255,255,0.18); }
+  .toggle input:checked + .knob::before { transform: translateX(12px); background: rgba(255,255,255,0.7); }
+
+  body.light .knob { background: rgba(0,0,0,0.10); }
+  body.light .knob::before { background: rgba(0,0,0,0.26); }
+  body.light .toggle input:checked + .knob { background: rgba(0,0,0,0.16); }
+  body.light .toggle input:checked + .knob::before { background: rgba(0,0,0,0.68); }
+
+  #meta {
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    color: rgba(255,255,255,0.18);
+    font-family: 'Geist Mono', 'Menlo', monospace;
+    transition: color 0.35s;
+  }
+
+  body.light #meta { color: rgba(0,0,0,0.22); }
+</style>
+</head>
+<body>
+
+<div id="wrap">
+  <div id="terminal">
+    <div id="body">
+      <div id="output"></div>
+    </div>
+    <div id="bottom">
+      <div id="controls-row">
+        <button class="paddle" id="btn-prev">
+          <svg width="9" height="14" viewBox="0 0 9 14" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6.5,1.5 2.5,7 6.5,12.5"/>
+          </svg>
+        </button>
+        <label class="toggle"><input type="checkbox" id="mode-switch"><span class="knob"></span></label>
+        <button class="paddle" id="btn-next">
+          <svg width="9" height="14" viewBox="0 0 9 14" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="2.5,1.5 6.5,7 2.5,12.5"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const out  = document.getElementById('output');
+  let   actx = null;
+
+  const ac = () => {
+    if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+    return actx;
+  };
+
+  function mkNoise(c, dur) {
+    const n = Math.ceil(c.sampleRate * dur);
+    const buf = c.createBuffer(1, n, c.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+    const src = c.createBufferSource(); src.buffer = buf; return src;
+  }
+
+  function keyClick() {
+    try {
+      const c = ac(), t = c.currentTime;
+      const noise = mkNoise(c, 0.005);
+      const ng = c.createGain();
+      ng.gain.setValueAtTime(0.14, t); ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.006);
+      noise.connect(ng); ng.connect(c.destination);
+      noise.start(); noise.stop(t + 0.007);
+      const osc = c.createOscillator(), og = c.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(300 + Math.random() * 60, t);
+      osc.frequency.exponentialRampToValueAtTime(80, t + 0.04);
+      osc.connect(og); og.connect(c.destination);
+      og.gain.setValueAtTime(0.055, t); og.gain.exponentialRampToValueAtTime(0.0001, t + 0.045);
+      osc.start(); osc.stop(t + 0.05);
+    } catch (_) {}
+  }
+
+  function enterClick() {
+    try {
+      const c = ac(), t = c.currentTime;
+      const noise = mkNoise(c, 0.008);
+      const ng = c.createGain();
+      ng.gain.setValueAtTime(0.22, t); ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.01);
+      noise.connect(ng); ng.connect(c.destination);
+      noise.start(); noise.stop(t + 0.012);
+      const osc = c.createOscillator(), og = c.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(220, t);
+      osc.frequency.exponentialRampToValueAtTime(60, t + 0.055);
+      osc.connect(og); og.connect(c.destination);
+      og.gain.setValueAtTime(0.08, t); og.gain.exponentialRampToValueAtTime(0.0001, t + 0.06);
+      osc.start(); osc.stop(t + 0.065);
+    } catch (_) {}
+  }
+
+  function blip() {
+    try {
+      const c = ac(), t = c.currentTime;
+      const noise = mkNoise(c, 0.004);
+      const ng = c.createGain();
+      ng.gain.setValueAtTime(0.05, t); ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.005);
+      noise.connect(ng); ng.connect(c.destination);
+      noise.start(); noise.stop(t + 0.006);
+    } catch (_) {}
+  }
+
+  const wait  = ms => new Promise(r => setTimeout(r, ms));
+  function waitG(ms, gen) {
+    return new Promise((res, rej) => setTimeout(() => runGen === gen ? res() : rej(0), ms));
+  }
+
+  function addLine(html = '') {
+    const el = document.createElement('span');
+    el.className = 'line'; el.innerHTML = html;
+    out.appendChild(el);
+    return el;
+  }
+
+  function mkPrompt(user = 'matt') {
+    const el  = document.createElement('span'); el.className = 'line';
+    const pr  = document.createElement('span'); pr.className = 'p'; pr.textContent = user + ' › ';
+    const cmd = document.createElement('span');
+    const cur = document.createElement('span'); cur.className = 'cursor';
+    el.appendChild(pr); el.appendChild(cmd); el.appendChild(cur);
+    out.appendChild(el);
+    return { cmd, cur };
+  }
+
+  async function type(cmdEl, text, gen) {
+    for (const ch of text) {
+      if (runGen !== gen) throw 0;
+      cmdEl.textContent += ch;
+      keyClick();
+      await wait(44 + Math.random() * 58);
+    }
+  }
+
+  const SPIN = ['⣾','⣽','⣻','⢿','⡿','⣟','⣯','⣷'];
+
+  function thinkFor(messages, ms, gen) {
+    const line = addLine('');
+    const span = document.createElement('span'); line.appendChild(span);
+    let si = 0, mi = 0, frames = 0;
+    span.innerHTML = `<span class="v">${SPIN[si]}</span>  <span class="d">${messages[mi]}</span>`;
+    return new Promise((res, rej) => {
+      const iv = setInterval(() => {
+        if (runGen !== gen) { clearInterval(iv); line.remove(); rej(0); return; }
+        si = (si + 1) % SPIN.length;
+        if (++frames % 12 === 0) mi = (mi + 1) % messages.length;
+        span.innerHTML = `<span class="v">${SPIN[si]}</span>  <span class="d">${messages[mi]}</span>`;
+      }, 100);
+      setTimeout(() => {
+        clearInterval(iv); line.remove();
+        runGen === gen ? res() : rej(0);
+      }, ms);
+    });
+  }
+
+  // ── Scenes ────────────────────────────────────────────────────────────
+
+  async function sceneStateMachine(gen) {
+    const { cmd, cur } = mkPrompt('matt');
+    await waitG(700, gen);
+    await type(cmd, 'cat state-machine.md', gen);
+    enterClick(); await waitG(140, gen); cur.remove();
+
+    await thinkFor(['reading file', 'parsing entry'], 1800, gen);
+
+    addLine('<span class="mk">state machine</span>');
+    blip(); await waitG(160, gen);
+    addLine('<span class="m">role</span>       <span class="wh">Product Designer · Design Engineer</span>');
+    blip(); await waitG(140, gen);
+    addLine('<span class="m">location</span>   <span class="d">San Diego, CA</span>');
+    blip(); await waitG(140, gen);
+    addLine('<span class="m">period</span>     <span class="d">2024 — present</span>');
+    blip(); await waitG(300, gen);
+
+    addLine('');
+    addLine('<span class="mk">—</span> <span class="v">building interaction prototypes and UI concepts</span>');
+    blip(); await waitG(180, gen);
+    addLine('<span class="mk">—</span> <span class="v">creative coding</span>  <span class="d">· canvas · physics · Metal shaders</span>');
+    blip(); await waitG(180, gen);
+    addLine('<span class="mk">—</span> <span class="v">AI-native product design and tooling</span>');
+    blip(); await waitG(180, gen);
+    addLine('<span class="mk">—</span> <span class="v">design systems and component libraries</span>');
+    blip();
+  }
+
+  async function sceneMakersPlace(gen) {
+    const { cmd, cur } = mkPrompt('matt');
+    await waitG(700, gen);
+    await type(cmd, 'cat makersplace.md', gen);
+    enterClick(); await waitG(140, gen); cur.remove();
+
+    await thinkFor(['reading file', 'parsing entry'], 1800, gen);
+
+    addLine('<span class="mk">makersplace</span>');
+    blip(); await waitG(160, gen);
+    addLine('<span class="m">role</span>       <span class="wh">Lead Product Designer</span>');
+    blip(); await waitG(140, gen);
+    addLine('<span class="m">location</span>   <span class="d">San Francisco, CA</span>');
+    blip(); await waitG(140, gen);
+    addLine('<span class="m">period</span>     <span class="d">2021 — 2023</span>');
+    blip(); await waitG(300, gen);
+
+    addLine('');
+    addLine('<span class="mk">—</span> <span class="v">led product design for an NFT fine art marketplace</span>');
+    blip(); await waitG(180, gen);
+    addLine('<span class="mk">—</span> <span class="v">built and owned the design system from scratch</span>');
+    blip(); await waitG(180, gen);
+    addLine('<span class="mk">—</span> <span class="v">designed complex creator and collector flows</span>');
+    blip(); await waitG(180, gen);
+    addLine('<span class="mk">—</span> <span class="v">shipped across web and iOS</span>');
+    blip();
+  }
+
+  async function sceneOlympus(gen) {
+    const { cmd, cur } = mkPrompt('matt');
+    await waitG(700, gen);
+    await type(cmd, 'cat olympus-finance.md', gen);
+    enterClick(); await waitG(140, gen); cur.remove();
+
+    await thinkFor(['reading file', 'parsing entry'], 1800, gen);
+
+    addLine('<span class="mk">olympus finance</span>');
+    blip(); await waitG(160, gen);
+    addLine('<span class="m">role</span>       <span class="wh">Product Designer</span>');
+    blip(); await waitG(140, gen);
+    addLine('<span class="m">period</span>     <span class="d">2021 — 2022</span>');
+    blip(); await waitG(300, gen);
+
+    addLine('');
+    addLine('<span class="mk">—</span> <span class="v">designed UX for a DeFi bonding and staking protocol</span>');
+    blip(); await waitG(180, gen);
+    addLine('<span class="mk">—</span> <span class="v">dashboard design for on-chain treasury mechanics</span>');
+    blip(); await waitG(180, gen);
+    addLine('<span class="mk">—</span> <span class="v">brand and interface work during rapid growth phase</span>');
+    blip(); await waitG(180, gen);
+    addLine('<span class="mk">—</span> <span class="v">shipped at speed in a high-stakes protocol environment</span>');
+    blip();
+  }
+
+  async function sceneActionNetwork(gen) {
+    const { cmd, cur } = mkPrompt('matt');
+    await waitG(700, gen);
+    await type(cmd, 'cat action-network.md', gen);
+    enterClick(); await waitG(140, gen); cur.remove();
+
+    await thinkFor(['reading file', 'parsing entry'], 1800, gen);
+
+    addLine('<span class="mk">the action network</span>');
+    blip(); await waitG(160, gen);
+    addLine('<span class="m">role</span>       <span class="wh">Product Designer</span>');
+    blip(); await waitG(140, gen);
+    addLine('<span class="m">location</span>   <span class="d">San Francisco, CA</span>');
+    blip(); await waitG(140, gen);
+    addLine('<span class="m">period</span>     <span class="d">2018 — 2021</span>');
+    blip(); await waitG(300, gen);
+
+    addLine('');
+    addLine('<span class="mk">—</span> <span class="v">product design for a sports betting analytics platform</span>');
+    blip(); await waitG(180, gen);
+    addLine('<span class="mk">—</span> <span class="v">odds displays, line movement, and bet tracking UIs</span>');
+    blip(); await waitG(180, gen);
+    addLine('<span class="mk">—</span> <span class="v">high-information density design for fast decisions</span>');
+    blip(); await waitG(180, gen);
+    addLine('<span class="mk">—</span> <span class="v">shipped across iOS, Android, and web</span>');
+    blip();
+  }
+
+  async function sceneQualcomm(gen) {
+    const { cmd, cur } = mkPrompt('matt');
+    await waitG(700, gen);
+    await type(cmd, 'cat qualcomm.md', gen);
+    enterClick(); await waitG(140, gen); cur.remove();
+
+    await thinkFor(['reading file', 'parsing entry'], 1800, gen);
+
+    addLine('<span class="mk">qualcomm</span>');
+    blip(); await waitG(160, gen);
+    addLine('<span class="m">role</span>       <span class="wh">UX Designer</span>');
+    blip(); await waitG(140, gen);
+    addLine('<span class="m">location</span>   <span class="d">San Diego, CA</span>');
+    blip(); await waitG(140, gen);
+    addLine('<span class="m">period</span>     <span class="d">2014 — 2018</span>');
+    blip(); await waitG(300, gen);
+
+    addLine('');
+    addLine('<span class="mk">—</span> <span class="v">UX and visual design for enterprise and developer tools</span>');
+    blip(); await waitG(180, gen);
+    addLine('<span class="mk">—</span> <span class="v">internal tooling for chipset and platform teams</span>');
+    blip(); await waitG(180, gen);
+    addLine('<span class="mk">—</span> <span class="v">Snapdragon developer documentation and portal UX</span>');
+    blip(); await waitG(180, gen);
+    addLine('<span class="mk">—</span> <span class="v">contributed to design process and standards</span>');
+    blip();
+  }
+
+  // ── Scene registry ────────────────────────────────────────────────────
+
+  const SCENE_FNS = [
+    sceneStateMachine,
+    sceneMakersPlace,
+    sceneOlympus,
+    sceneActionNetwork,
+    sceneQualcomm,
+  ];
+
+  let sceneIdx = 0;
+  let runGen   = 0;
+
+  function switchScene(idx) {
+    sceneIdx = ((idx % SCENE_FNS.length) + SCENE_FNS.length) % SCENE_FNS.length;
+    runGen++;
+    out.innerHTML = '';
+    setTimeout(() => run(), 400);
+  }
+
+  async function run() {
+    const gen = ++runGen;
+    out.innerHTML = '';
+    try {
+      await waitG(700, gen);
+      await SCENE_FNS[sceneIdx](gen);
+      await waitG(500, gen);
+      mkPrompt('matt');
+      await waitG(3200, gen);
+      sceneIdx = (sceneIdx + 1) % SCENE_FNS.length;
+      run();
+    } catch (_) {}
+  }
+
+  document.getElementById('btn-prev').addEventListener('click', () => switchScene(sceneIdx - 1));
+  document.getElementById('btn-next').addEventListener('click', () => switchScene(sceneIdx + 1));
+
+  const modeSwitch  = document.getElementById('mode-switch');
+  const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+  if (prefersLight) { document.body.classList.add('light'); modeSwitch.checked = true; }
+
+  modeSwitch.addEventListener('change', e => {
+    document.body.classList.toggle('light', e.target.checked);
+  });
+
+  document.addEventListener('click', () => ac(), { once: true });
+
+  run();
+})();
+</script>
+</body>
+</html>
