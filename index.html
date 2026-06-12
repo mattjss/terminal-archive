@@ -460,6 +460,8 @@
     const gen = ++runGen;
     out.innerHTML = '';
     try {
+      addLine('<span class="mk">matt silverman</span>  <span class="d">design</span>');
+      addLine('');
       await waitG(700, gen);
       await SCENE_FNS[sceneIdx](gen);
       await waitG(500, gen);
