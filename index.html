@@ -312,7 +312,7 @@
     blip(); await waitG(140, gen);
     addLine('<span class="m">location</span>   <span class="d">San Diego, CA</span>');
     blip(); await waitG(140, gen);
-    addLine('<span class="m">period</span>     <span class="d">2024 — present</span>');
+    addLine('<span class="m">period</span>     <span class="d">2025 — present</span>');
     blip(); await waitG(300, gen);
 
     addLine('');
@@ -340,7 +340,7 @@
     blip(); await waitG(140, gen);
     addLine('<span class="m">location</span>   <span class="d">San Francisco, CA</span>');
     blip(); await waitG(140, gen);
-    addLine('<span class="m">period</span>     <span class="d">2021 — 2023</span>');
+    addLine('<span class="m">period</span>     <span class="d">2022 — 2025</span>');
     blip(); await waitG(300, gen);
 
     addLine('');
@@ -394,7 +394,7 @@
     blip(); await waitG(140, gen);
     addLine('<span class="m">location</span>   <span class="d">San Francisco, CA</span>');
     blip(); await waitG(140, gen);
-    addLine('<span class="m">period</span>     <span class="d">2018 — 2021</span>');
+    addLine('<span class="m">period</span>     <span class="d">2019 — 2020</span>');
     blip(); await waitG(300, gen);
 
     addLine('');
@@ -418,32 +418,57 @@
 
     addLine('<span class="mk">qualcomm</span>');
     blip(); await waitG(160, gen);
-    addLine('<span class="m">role</span>       <span class="wh">UX Designer</span>');
+    addLine('<span class="m">role</span>       <span class="wh">UX Researcher</span>  <span class="d">· contract</span>');
     blip(); await waitG(140, gen);
     addLine('<span class="m">location</span>   <span class="d">San Diego, CA</span>');
     blip(); await waitG(140, gen);
-    addLine('<span class="m">period</span>     <span class="d">2014 — 2018</span>');
+    addLine('<span class="m">period</span>     <span class="d">2010</span>');
     blip(); await waitG(300, gen);
 
     addLine('');
-    addLine('<span class="mk">—</span> <span class="v">UX and visual design for enterprise and developer tools</span>');
+    addLine('<span class="mk">—</span> <span class="v">UX research for Qualcomm Retail Solutions</span>');
     blip(); await waitG(180, gen);
-    addLine('<span class="mk">—</span> <span class="v">internal tooling for chipset and platform teams</span>');
+    addLine('<span class="mk">—</span> <span class="v">conducted research on the Swagg App</span>  <span class="d">· iOS + Android</span>');
     blip(); await waitG(180, gen);
-    addLine('<span class="mk">—</span> <span class="v">Snapdragon developer documentation and portal UX</span>');
+    addLine('<span class="mk">—</span> <span class="v">user interviews, usability testing, and synthesis</span>');
+    blip();
+  }
+
+  async function sceneMattSilvermanDesign(gen) {
+    const { cmd, cur } = mkPrompt('matt');
+    await waitG(700, gen);
+    await type(cmd, 'cat matt-silverman-design.md', gen);
+    enterClick(); await waitG(140, gen); cur.remove();
+
+    await thinkFor(['reading file', 'parsing entry'], 1800, gen);
+
+    addLine('<span class="mk">matt silverman design</span>');
+    blip(); await waitG(160, gen);
+    addLine('<span class="m">role</span>       <span class="wh">Independent Designer</span>');
+    blip(); await waitG(140, gen);
+    addLine('<span class="m">location</span>   <span class="d">San Diego, CA</span>');
+    blip(); await waitG(140, gen);
+    addLine('<span class="m">period</span>     <span class="d">2014 — 2019</span>');
+    blip(); await waitG(300, gen);
+
+    addLine('');
+    addLine('<span class="mk">—</span> <span class="v">independent product and UX design</span>');
     blip(); await waitG(180, gen);
-    addLine('<span class="mk">—</span> <span class="v">contributed to design process and standards</span>');
+    addLine('<span class="mk">—</span> <span class="v">brand identity and visual design</span>');
+    blip(); await waitG(180, gen);
+    addLine('<span class="mk">—</span> <span class="v">client work across web and mobile</span>');
     blip();
   }
 
   // ── Scene registry ────────────────────────────────────────────────────
 
   const SCENE_FNS = [
-    sceneStateMachine,
-    sceneMakersPlace,
-    sceneOlympus,
-    sceneActionNetwork,
     sceneQualcomm,
+    sceneMattSilvermanDesign,
+    sceneActionNetwork,
+    sceneOlympus,
+    sceneMakersPlace,
+    sceneStateMachine,
   ];
 
   let sceneIdx = 0;
